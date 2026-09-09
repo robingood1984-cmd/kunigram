@@ -43,45 +43,32 @@ jobs:
         with:
           cache-read-only: false
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: "build-tools;37.0.0 ndk;27.3.13750724 platforms;android-37.0"
-
+      
       - name: Configure Gradle
         run: |
           mkdir -p ~/.gradle
-          echo 'org.gradle.caching=true' >> ~/.gradle/gradle.properties
-          echo 'org.gradle.parallel=true' >> ~/.gradle/gradle.properties
-          echo 'org.gradle.jvmargs=-Xmx56g -Dfile.encoding=UTF-8 -XX:+UseParallelGC' >> ~/.gradle/gradle.properties
-          echo 'android.native.buildOutput=verbose' >> ~/.gradle/gradle.properties
-
+            echo 'org.gradle.caching=true' >> ~/.gradle/gradle.properties
+            echo 'org.gradle.parallel=true' >> ~/.gradle/gradle.properties
+            echo 'org.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8 -XX:+UseParallelGC' >> ~/.gradle/gradle.properties
+            echo 'android.native.buildOutput=verbose' >> ~/.gradle/gradle.properties
       - name: Configure Signing
         run: |
+          keytool -genkeypair -v -keystore keystore.jks -alias kunigram -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Kunigram, OU=Kunigram, O=Kunigram, L=City, S=State, C=RU"
           echo "storeFile=${{ github.workspace }}/keystore.jks" >> local.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> local.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> local.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> local.properties
-          
-          echo "${{ secrets.KEYSTORE_JKS }}" | base64 --decode > keystore.jks
+          echo "storePassword=123456" >> local.properties
+          echo "keyAlias=kunigram" >> local.properties
+          echo "keyPassword=123456" >> local.properties
 
       - name: Configure Secrets
         run: |
-          echo "apiId=${{ secrets.API_ID }}" >> local.properties
-          echo "apiHash=${{ secrets.API_HASH }}" >> local.properties
-          echo "helperBotId=${{ secrets.HELPER_BOT_ID }}" >> local.properties
-          echo "helperBotUsername=${{ secrets.HELPER_BOT_USERNAME }}" >> local.properties
-          echo "sentryDsn=${{ secrets.SENTRY_DSN }}" >> local.properties
-          echo "mapsApiKey=${{ secrets.MAPS_API_KEY }}" >> local.properties
-
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > TMessagesProj_App/google-services.json
-          echo "${{ secrets.SENTRY_PROPERTIES }}" | base64 --decode > sentry.properties
+          echo "apiId=38296102" >> local.properties
+          echo "apiHash=fd90877fc93fc99e75471dd39582f666" >> local.properties
+          echo '{"project_info":{"project_number":"0","project_id":"kunigram","storage_bucket":"kunigram.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"app.nekogram.nekogram"}},"oauth_client":[],"api_key":[{"current_key":"fake"}],"services":{}},{"client_info":{"mobilesdk_app_id":"1:0:android:1","android_client_info":{"package_name":"nekox.messenger"}},"oauth_client":[],"api_key":[{"current_key":"fake"}],"services":{}},{"client_info":{"mobilesdk_app_id":"1:0:android:2","android_client_info":{"package_name":"org.telegram.messenger"}},"oauth_client":[],"api_key":[{"current_key":"fake"}],"services":{}},{"client_info":{"mobilesdk_app_id":"1:0:android:3","android_client_info":{"package_name":"org.telegram.messenger.web"}},"oauth_client":[],"api_key":[{"current_key":"fake"}],"services":{}}],"configuration_version":"1"}' > TMessagesProj_App/google-services.json
+          touch sentry.properties
 
       - name: Build with Gradle
         run: |
           ./gradlew assembleRelease
-          ./gradlew bundlePlay
-          ./gradlew sentryUploadSourceBundlePlay
 
       - name: Attest
         uses: actions/attest@v4
